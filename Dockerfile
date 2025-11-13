@@ -126,13 +126,16 @@ RUN apt-get update && apt-get install -y nvidia-utils-530
 # 设置 PYTHONPATH 环境变量
 ENV PYTHONPATH=/workspace
 
-# 保持容器运行
-CMD ["bash", "-c", "while true; do sleep 1000; done"]
+RUN pip uninstall torch-points-kernels -y
 
-RUN pip install --no-deps --no-cache-dir\
+# RTX A6000 has compute capability 8.6 (Ampere architecture)
+RUN TORCH_CUDA_ARCH_LIST="8.6" FORCE_CUDA=1 pip install --no-deps --no-cache-dir\
     torch-points-kernels==0.7.0
 
 RUN pip uninstall torch-cluster
 
 RUN pip install --no-deps --no-cache-dir\
     torch-cluster
+
+# Keep container running
+CMD ["bash", "-c", "while true; do sleep 1000; done"]
