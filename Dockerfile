@@ -141,6 +141,11 @@ RUN pip install laspy
 
 RUN pip install "laspy[lazrs]"
 
+# Install wget and create model_file directory
+RUN apt-get update && apt-get install -y wget && \
+    mkdir -p model_file && \
+    wget "https://kattenborn.go.bwsfs.uni-freiburg.de:11443/web/client/pubshares/4HMayNxzm9vqVi3AE2HUnM/download?compress=false" -O model_file/model_file.pth
+
 
 # Keep container running
 CMD ["bash", "-c", "while true; do sleep 1000; done"]
