@@ -137,5 +137,10 @@ RUN pip uninstall torch-cluster
 RUN pip install --no-deps --no-cache-dir\
     torch-cluster
 
+RUN pip install laspy
+
+RUN pip install "laspy[lazrs]"
+
+
 # Keep container running
 CMD ["bash", "-c", "while true; do sleep 1000; done"]
