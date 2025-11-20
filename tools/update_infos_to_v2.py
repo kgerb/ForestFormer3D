@@ -233,14 +233,21 @@ def update_scannet_infos(pkl_path, out_dir):
         temp_data_info["lidar_points"]["lidar_path"] = Path(
             ori_info_dict["pts_path"]
         ).name
-        if "pts_semantic_mask_path" in ori_info_dict:
+        # Always set mask paths - use actual path if available, empty string for test data
+        if "pts_semantic_mask_path" in ori_info_dict and ori_info_dict["pts_semantic_mask_path"] is not None:
             temp_data_info["pts_semantic_mask_path"] = Path(
                 ori_info_dict["pts_semantic_mask_path"]
             ).name
-        if "pts_instance_mask_path" in ori_info_dict:
+        else:
+            # For test data or missing paths, set empty string as placeholder
+            temp_data_info["pts_semantic_mask_path"] = ""
+        if "pts_instance_mask_path" in ori_info_dict and ori_info_dict["pts_instance_mask_path"] is not None:
             temp_data_info["pts_instance_mask_path"] = Path(
                 ori_info_dict["pts_instance_mask_path"]
             ).name
+        else:
+            # For test data or missing paths, set empty string as placeholder
+            temp_data_info["pts_instance_mask_path"] = ""
         if "super_pts_path" in ori_info_dict:
             temp_data_info["super_pts_path"] = Path(
                 ori_info_dict["super_pts_path"]
@@ -514,14 +521,21 @@ def update_scannet200_infos(pkl_path, out_dir):
         temp_data_info["lidar_points"]["lidar_path"] = Path(
             ori_info_dict["pts_path"]
         ).name
-        if "pts_semantic_mask_path" in ori_info_dict:
+        # Always set mask paths - use actual path if available, empty string for test data
+        if "pts_semantic_mask_path" in ori_info_dict and ori_info_dict["pts_semantic_mask_path"] is not None:
             temp_data_info["pts_semantic_mask_path"] = Path(
                 ori_info_dict["pts_semantic_mask_path"]
             ).name
-        if "pts_instance_mask_path" in ori_info_dict:
+        else:
+            # For test data or missing paths, set empty string as placeholder
+            temp_data_info["pts_semantic_mask_path"] = ""
+        if "pts_instance_mask_path" in ori_info_dict and ori_info_dict["pts_instance_mask_path"] is not None:
             temp_data_info["pts_instance_mask_path"] = Path(
                 ori_info_dict["pts_instance_mask_path"]
             ).name
+        else:
+            # For test data or missing paths, set empty string as placeholder
+            temp_data_info["pts_instance_mask_path"] = ""
         if "super_pts_path" in ori_info_dict:
             temp_data_info["super_pts_path"] = Path(
                 ori_info_dict["super_pts_path"]
@@ -595,14 +609,21 @@ def update_forainetv2_infos(pkl_path, out_dir):
         temp_data_info["lidar_points"]["lidar_path"] = Path(
             ori_info_dict["pts_path"]
         ).name
-        if "pts_semantic_mask_path" in ori_info_dict:
+        # Always set mask paths - use actual path if available, empty string for test data
+        if "pts_semantic_mask_path" in ori_info_dict and ori_info_dict["pts_semantic_mask_path"] is not None:
             temp_data_info["pts_semantic_mask_path"] = Path(
                 ori_info_dict["pts_semantic_mask_path"]
             ).name
-        if "pts_instance_mask_path" in ori_info_dict:
+        else:
+            # For test data or missing paths, set empty string as placeholder
+            temp_data_info["pts_semantic_mask_path"] = ""
+        if "pts_instance_mask_path" in ori_info_dict and ori_info_dict["pts_instance_mask_path"] is not None:
             temp_data_info["pts_instance_mask_path"] = Path(
                 ori_info_dict["pts_instance_mask_path"]
             ).name
+        else:
+            # For test data or missing paths, set empty string as placeholder
+            temp_data_info["pts_instance_mask_path"] = ""
         # if 'super_pts_path' in ori_info_dict:
         #    temp_data_info['super_pts_path'] = Path(
         #        ori_info_dict['super_pts_path']).name
