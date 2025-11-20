@@ -2265,9 +2265,10 @@ class ForAINetV2OneFormer3D_XAwarequery(Base3DDetector):
         current_filename = os.path.splitext(base_name)[0]
         t1 = time.time()                 
         #########print(f"load pc: {(t1 - t0)*1000:.0f} ms")
-        #is_test = True
-        #if is_test:
-        if 'test' in lidar_path:
+        # Always execute for test mode (when predict() is called from test loop)
+        is_test = True
+        if is_test:
+        #if 'test' in lidar_path:
             step_size = self.radius/4
             grid_size = 0.2
             num_points = 640000
@@ -2291,7 +2292,7 @@ class ForAINetV2OneFormer3D_XAwarequery(Base3DDetector):
             
             ##########output_path = "/workspace/work_dirs/bluepoint_th04fixed_03_priority_test_tobedelete"
             #########output_path = "/workspace/work_dirs/bluepoint_forinstancev2"
-            output_path = "/workspace/work_dirs/V3"
+            output_path = "/workspace/work_dirs/bluepoint_th04fixed_03_priority_test"
             score_th1 = self.score_th
             score_th2 = 0.3
             t2 = time.time()   
@@ -2349,8 +2350,12 @@ class ForAINetV2OneFormer3D_XAwarequery(Base3DDetector):
                 if tree_indices.numel() > 1:
                     
                     # FPS from all tree points
-                    batch_tensor_4 = torch.zeros(embed_logits[tree_indices].size(0), dtype=torch.long).to(embed_logits.device)  # Ensure batch_tensor on same device
-                    topk_indices_4 = fps(embed_logits[tree_indices], batch_tensor_4, ratio=min(self.query_point_num / embed_logits[tree_indices].size(0), torch.tensor([1.0]).to(embed_logits.device)))
+                    # Move to CPU for torch_cluster.fps (not compiled with CUDA support)
+                    embed_logits_cpu = embed_logits[tree_indices].cpu()
+                    batch_tensor_4 = torch.zeros(embed_logits_cpu.size(0), dtype=torch.long)
+                    ratio_val = min(self.query_point_num / embed_logits_cpu.size(0), 1.0)
+                    topk_indices_4 = fps(embed_logits_cpu, batch_tensor_4, ratio=ratio_val)
+                    # Move indices back to original device
                     selected_indices_case4 = tree_indices[topk_indices_4]
 
                     # add content queries
