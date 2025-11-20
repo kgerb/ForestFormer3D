@@ -9,14 +9,12 @@ from mmdet3d.registry import DATASETS
 @DATASETS.register_module()
 class ForAINetV2SegDataset_(ScanNetDataset):
     """We just add super_pts_path."""
+
     METAINFO = {
-        'classes':
-        ('ground','wood','leaf'),
-        'palette': [[0, 255, 0],[0, 0, 255], [0, 255, 255]],
-        'seg_valid_class_ids':
-        (0, 1, 2),
-        'seg_all_class_ids':
-        (0, 1, 2)  # possibly with 'stair' class
+        "classes": ("ground", "wood", "leaf"),
+        "palette": [[0, 255, 0], [0, 0, 255], [0, 255, 255]],
+        "seg_valid_class_ids": (0, 1, 2),
+        "seg_all_class_ids": (0, 1, 2),  # possibly with 'stair' class
     }
 
     def get_scene_idxs(self, *args, **kwargs):
@@ -33,8 +31,15 @@ class ForAINetV2SegDataset_(ScanNetDataset):
             dict: Has `ann_info` in training stage. And
             all path has been converted to absolute path.
         """
-        #info['super_pts_path'] = osp.join(
+        # info['super_pts_path'] = osp.join(
         #    self.data_prefix.get('sp_pts_mask', ''), info['super_pts_path'])
+
+        # For test data, set placeholder paths if they're None
+        if self.test_mode:
+            if info.get("pts_instance_mask_path") is None:
+                info["pts_instance_mask_path"] = ""
+            if info.get("pts_semantic_mask_path") is None:
+                info["pts_semantic_mask_path"] = ""
 
         info = super().parse_data_info(info)
 
