@@ -34,17 +34,19 @@ class EpochBasedTrainLoop(BaseLoop):
     """
 
     def __init__(
-            self,
-            runner,
-            dataloader: Union[DataLoader, Dict],
-            max_epochs: int,
-            val_begin: int = 1,
-            val_interval: int = 1,
-            dynamic_intervals: Optional[List[Tuple[int, int]]] = None) -> None:
+        self,
+        runner,
+        dataloader: Union[DataLoader, Dict],
+        max_epochs: int,
+        val_begin: int = 1,
+        val_interval: int = 1,
+        dynamic_intervals: Optional[List[Tuple[int, int]]] = None,
+    ) -> None:
         super().__init__(runner, dataloader)
         self._max_epochs = int(max_epochs)
-        assert self._max_epochs == max_epochs, \
-            f'`max_epochs` should be a integer number, but get {max_epochs}.'
+        assert self._max_epochs == max_epochs, (
+            f"`max_epochs` should be a integer number, but get {max_epochs}."
+        )
         self._max_iters = self._max_epochs * len(self.dataloader)
         self._epoch = 0
         self._iter = 0
@@ -53,20 +55,20 @@ class EpochBasedTrainLoop(BaseLoop):
         # This attribute will be updated by `EarlyStoppingHook`
         # when it is enabled.
         self.stop_training = False
-        if hasattr(self.dataloader.dataset, 'metainfo'):
-            self.runner.visualizer.dataset_meta = \
-                self.dataloader.dataset.metainfo
+        if hasattr(self.dataloader.dataset, "metainfo"):
+            self.runner.visualizer.dataset_meta = self.dataloader.dataset.metainfo
         else:
             print_log(
-                f'Dataset {self.dataloader.dataset.__class__.__name__} has no '
-                'metainfo. ``dataset_meta`` in visualizer will be '
-                'None.',
-                logger='current',
-                level=logging.WARNING)
+                f"Dataset {self.dataloader.dataset.__class__.__name__} has no "
+                "metainfo. ``dataset_meta`` in visualizer will be "
+                "None.",
+                logger="current",
+                level=logging.WARNING,
+            )
 
-        self.dynamic_milestones, self.dynamic_intervals = \
-            calc_dynamic_intervals(
-                self.val_interval, dynamic_intervals)
+        self.dynamic_milestones, self.dynamic_intervals = calc_dynamic_intervals(
+            self.val_interval, dynamic_intervals
+        )
 
     @property
     def max_epochs(self):
@@ -90,28 +92,30 @@ class EpochBasedTrainLoop(BaseLoop):
 
     def run(self) -> torch.nn.Module:
         """Launch training."""
-        self.runner.call_hook('before_train')
+        self.runner.call_hook("before_train")
 
         while self._epoch < self._max_epochs and not self.stop_training:
             self.run_epoch()
 
             self._decide_current_val_interval()
-            if (self.runner.val_loop is not None
-                    and self._epoch >= self.val_begin
-                    and self._epoch % self.val_interval == 0):
+            if (
+                self.runner.val_loop is not None
+                and self._epoch >= self.val_begin
+                and self._epoch % self.val_interval == 0
+            ):
                 self.runner.val_loop.run()
 
-        self.runner.call_hook('after_train')
+        self.runner.call_hook("after_train")
         return self.runner.model
 
     def run_epoch(self) -> None:
         """Iterate one epoch."""
-        self.runner.call_hook('before_train_epoch')
+        self.runner.call_hook("before_train_epoch")
         self.runner.model.train()
         for idx, data_batch in enumerate(self.dataloader):
             self.run_iter(idx, data_batch)
 
-        self.runner.call_hook('after_train_epoch')
+        self.runner.call_hook("after_train_epoch")
         self._epoch += 1
 
     def run_iter(self, idx, data_batch: Sequence[dict]) -> None:
@@ -120,19 +124,17 @@ class EpochBasedTrainLoop(BaseLoop):
         Args:
             data_batch (Sequence[dict]): Batch of data from dataloader.
         """
-        self.runner.call_hook(
-            'before_train_iter', batch_idx=idx, data_batch=data_batch)
+        self.runner.call_hook("before_train_iter", batch_idx=idx, data_batch=data_batch)
         # Enable gradient accumulation mode and avoid unnecessary gradient
         # synchronization during gradient accumulation process.
         # outputs should be a dict of loss.
         outputs = self.runner.model.train_step(
-            data_batch, epoch=self._epoch, optim_wrapper=self.runner.optim_wrapper)
+            data_batch, epoch=self._epoch, optim_wrapper=self.runner.optim_wrapper
+        )
 
         self.runner.call_hook(
-            'after_train_iter',
-            batch_idx=idx,
-            data_batch=data_batch,
-            outputs=outputs)
+            "after_train_iter", batch_idx=idx, data_batch=data_batch, outputs=outputs
+        )
         self._iter += 1
 
     def _decide_current_val_interval(self) -> None:
@@ -164,22 +166,25 @@ class _InfiniteDataloaderIterator:
             data = next(self._iterator)
         except StopIteration:
             print_log(
-                'Reach the end of the dataloader, it will be '
-                'restarted and continue to iterate. It is '
-                'recommended to use '
-                '`mmengine.dataset.InfiniteSampler` to enable the '
-                'dataloader to iterate infinitely.',
-                logger='current',
-                level=logging.WARNING)
+                "Reach the end of the dataloader, it will be "
+                "restarted and continue to iterate. It is "
+                "recommended to use "
+                "`mmengine.dataset.InfiniteSampler` to enable the "
+                "dataloader to iterate infinitely.",
+                logger="current",
+                level=logging.WARNING,
+            )
             self._epoch += 1
-            if hasattr(self._dataloader, 'sampler') and hasattr(
-                    self._dataloader.sampler, 'set_epoch'):
+            if hasattr(self._dataloader, "sampler") and hasattr(
+                self._dataloader.sampler, "set_epoch"
+            ):
                 # In case the` _SingleProcessDataLoaderIter` has no sampler,
                 # or data loader uses `SequentialSampler` in Pytorch.
                 self._dataloader.sampler.set_epoch(self._epoch)
 
-            elif hasattr(self._dataloader, 'batch_sampler') and hasattr(
-                    self._dataloader.batch_sampler.sampler, 'set_epoch'):
+            elif hasattr(self._dataloader, "batch_sampler") and hasattr(
+                self._dataloader.batch_sampler.sampler, "set_epoch"
+            ):
                 # In case the` _SingleProcessDataLoaderIter` has no batch
                 # sampler. batch sampler in pytorch warps the sampler as its
                 # attributes.
@@ -209,17 +214,19 @@ class IterBasedTrainLoop(BaseLoop):
     """
 
     def __init__(
-            self,
-            runner,
-            dataloader: Union[DataLoader, Dict],
-            max_iters: int,
-            val_begin: int = 1,
-            val_interval: int = 1000,
-            dynamic_intervals: Optional[List[Tuple[int, int]]] = None) -> None:
+        self,
+        runner,
+        dataloader: Union[DataLoader, Dict],
+        max_iters: int,
+        val_begin: int = 1,
+        val_interval: int = 1000,
+        dynamic_intervals: Optional[List[Tuple[int, int]]] = None,
+    ) -> None:
         super().__init__(runner, dataloader)
         self._max_iters = int(max_iters)
-        assert self._max_iters == max_iters, \
-            f'`max_iters` should be a integer number, but get {max_iters}'
+        assert self._max_iters == max_iters, (
+            f"`max_iters` should be a integer number, but get {max_iters}"
+        )
         self._max_epochs = 1  # for compatibility with EpochBasedTrainLoop
         self._epoch = 0
         self._iter = 0
@@ -228,22 +235,22 @@ class IterBasedTrainLoop(BaseLoop):
         # This attribute will be updated by `EarlyStoppingHook`
         # when it is enabled.
         self.stop_training = False
-        if hasattr(self.dataloader.dataset, 'metainfo'):
-            self.runner.visualizer.dataset_meta = \
-                self.dataloader.dataset.metainfo
+        if hasattr(self.dataloader.dataset, "metainfo"):
+            self.runner.visualizer.dataset_meta = self.dataloader.dataset.metainfo
         else:
             print_log(
-                f'Dataset {self.dataloader.dataset.__class__.__name__} has no '
-                'metainfo. ``dataset_meta`` in visualizer will be '
-                'None.',
-                logger='current',
-                level=logging.WARNING)
+                f"Dataset {self.dataloader.dataset.__class__.__name__} has no "
+                "metainfo. ``dataset_meta`` in visualizer will be "
+                "None.",
+                logger="current",
+                level=logging.WARNING,
+            )
         # get the iterator of the dataloader
         self.dataloader_iterator = _InfiniteDataloaderIterator(self.dataloader)
 
-        self.dynamic_milestones, self.dynamic_intervals = \
-            calc_dynamic_intervals(
-                self.val_interval, dynamic_intervals)
+        self.dynamic_milestones, self.dynamic_intervals = calc_dynamic_intervals(
+            self.val_interval, dynamic_intervals
+        )
 
     @property
     def max_epochs(self):
@@ -267,10 +274,10 @@ class IterBasedTrainLoop(BaseLoop):
 
     def run(self) -> None:
         """Launch training."""
-        self.runner.call_hook('before_train')
+        self.runner.call_hook("before_train")
         # In iteration-based training loop, we treat the whole training process
         # as a big epoch and execute the corresponding hook.
-        self.runner.call_hook('before_train_epoch')
+        self.runner.call_hook("before_train_epoch")
         while self._iter < self._max_iters and not self.stop_training:
             self.runner.model.train()
 
@@ -278,13 +285,15 @@ class IterBasedTrainLoop(BaseLoop):
             self.run_iter(data_batch)
 
             self._decide_current_val_interval()
-            if (self.runner.val_loop is not None
-                    and self._iter >= self.val_begin
-                    and self._iter % self.val_interval == 0):
+            if (
+                self.runner.val_loop is not None
+                and self._iter >= self.val_begin
+                and self._iter % self.val_interval == 0
+            ):
                 self.runner.val_loop.run()
 
-        self.runner.call_hook('after_train_epoch')
-        self.runner.call_hook('after_train')
+        self.runner.call_hook("after_train_epoch")
+        self.runner.call_hook("after_train")
         return self.runner.model
 
     def run_iter(self, data_batch: Sequence[dict]) -> None:
@@ -294,18 +303,21 @@ class IterBasedTrainLoop(BaseLoop):
             data_batch (Sequence[dict]): Batch of data from dataloader.
         """
         self.runner.call_hook(
-            'before_train_iter', batch_idx=self._iter, data_batch=data_batch)
+            "before_train_iter", batch_idx=self._iter, data_batch=data_batch
+        )
         # Enable gradient accumulation mode and avoid unnecessary gradient
         # synchronization during gradient accumulation process.
         # outputs should be a dict of loss.
         outputs = self.runner.model.train_step(
-            data_batch, optim_wrapper=self.runner.optim_wrapper)
+            data_batch, optim_wrapper=self.runner.optim_wrapper
+        )
 
         self.runner.call_hook(
-            'after_train_iter',
+            "after_train_iter",
             batch_idx=self._iter,
             data_batch=data_batch,
-            outputs=outputs)
+            outputs=outputs,
+        )
         self._iter += 1
 
     def _decide_current_val_interval(self) -> None:
@@ -327,45 +339,48 @@ class ValLoop(BaseLoop):
             False.
     """
 
-    def __init__(self,
-                 runner,
-                 dataloader: Union[DataLoader, Dict],
-                 evaluator: Union[Evaluator, Dict, List],
-                 fp16: bool = False) -> None:
+    def __init__(
+        self,
+        runner,
+        dataloader: Union[DataLoader, Dict],
+        evaluator: Union[Evaluator, Dict, List],
+        fp16: bool = False,
+    ) -> None:
         super().__init__(runner, dataloader)
 
         if isinstance(evaluator, dict) or isinstance(evaluator, list):
             self.evaluator = runner.build_evaluator(evaluator)  # type: ignore
         else:
             assert isinstance(evaluator, Evaluator), (
-                'evaluator must be one of dict, list or Evaluator instance, '
-                f'but got {type(evaluator)}.')
+                "evaluator must be one of dict, list or Evaluator instance, "
+                f"but got {type(evaluator)}."
+            )
             self.evaluator = evaluator  # type: ignore
-        if hasattr(self.dataloader.dataset, 'metainfo'):
+        if hasattr(self.dataloader.dataset, "metainfo"):
             self.evaluator.dataset_meta = self.dataloader.dataset.metainfo
-            self.runner.visualizer.dataset_meta = \
-                self.dataloader.dataset.metainfo
+            self.runner.visualizer.dataset_meta = self.dataloader.dataset.metainfo
         else:
             print_log(
-                f'Dataset {self.dataloader.dataset.__class__.__name__} has no '
-                'metainfo. ``dataset_meta`` in evaluator, metric and '
-                'visualizer will be None.',
-                logger='current',
-                level=logging.WARNING)
+                f"Dataset {self.dataloader.dataset.__class__.__name__} has no "
+                "metainfo. ``dataset_meta`` in evaluator, metric and "
+                "visualizer will be None.",
+                logger="current",
+                level=logging.WARNING,
+            )
         self.fp16 = fp16
 
     def run(self) -> dict:
         """Launch validation."""
-        self.runner.call_hook('before_val')
-        self.runner.call_hook('before_val_epoch')
+        self.runner.call_hook("before_val")
+        self.runner.call_hook("before_val_epoch")
         self.runner.model.eval()
         for idx, data_batch in enumerate(self.dataloader):
             self.run_iter(idx, data_batch)
 
         # compute metrics
         metrics = self.evaluator.evaluate(len(self.dataloader.dataset))
-        self.runner.call_hook('after_val_epoch', metrics=metrics)
-        self.runner.call_hook('after_val')
+        self.runner.call_hook("after_val_epoch", metrics=metrics)
+        self.runner.call_hook("after_val")
         return metrics
 
     @torch.no_grad()
@@ -376,21 +391,17 @@ class ValLoop(BaseLoop):
             data_batch (Sequence[dict]): Batch of data
                 from dataloader.
         """
-        self.runner.call_hook(
-            'before_val_iter', batch_idx=idx, data_batch=data_batch)
+        self.runner.call_hook("before_val_iter", batch_idx=idx, data_batch=data_batch)
         # outputs should be sequence of BaseDataElement
         with autocast(enabled=self.fp16):
-            #outputs = self.runner.model.val_step(data_batch)
+            # outputs = self.runner.model.val_step(data_batch)
 
-            outputs = self.runner.model.val_step(
-            data_batch, epoch=0)
+            outputs = self.runner.model.val_step(data_batch, epoch=0)
 
         self.evaluator.process(data_samples=outputs, data_batch=data_batch)
         self.runner.call_hook(
-            'after_val_iter',
-            batch_idx=idx,
-            data_batch=data_batch,
-            outputs=outputs)
+            "after_val_iter", batch_idx=idx, data_batch=data_batch, outputs=outputs
+        )
 
 
 @LOOPS.register_module()
@@ -406,42 +417,44 @@ class TestLoop(BaseLoop):
             False.
     """
 
-    def __init__(self,
-                 runner,
-                 dataloader: Union[DataLoader, Dict],
-                 evaluator: Union[Evaluator, Dict, List],
-                 fp16: bool = False):
+    def __init__(
+        self,
+        runner,
+        dataloader: Union[DataLoader, Dict],
+        evaluator: Union[Evaluator, Dict, List],
+        fp16: bool = False,
+    ):
         super().__init__(runner, dataloader)
 
         if isinstance(evaluator, dict) or isinstance(evaluator, list):
             self.evaluator = runner.build_evaluator(evaluator)  # type: ignore
         else:
             self.evaluator = evaluator  # type: ignore
-        if hasattr(self.dataloader.dataset, 'metainfo'):
+        if hasattr(self.dataloader.dataset, "metainfo"):
             self.evaluator.dataset_meta = self.dataloader.dataset.metainfo
-            self.runner.visualizer.dataset_meta = \
-                self.dataloader.dataset.metainfo
+            self.runner.visualizer.dataset_meta = self.dataloader.dataset.metainfo
         else:
             print_log(
-                f'Dataset {self.dataloader.dataset.__class__.__name__} has no '
-                'metainfo. ``dataset_meta`` in evaluator, metric and '
-                'visualizer will be None.',
-                logger='current',
-                level=logging.WARNING)
+                f"Dataset {self.dataloader.dataset.__class__.__name__} has no "
+                "metainfo. ``dataset_meta`` in evaluator, metric and "
+                "visualizer will be None.",
+                logger="current",
+                level=logging.WARNING,
+            )
         self.fp16 = fp16
 
     def run(self) -> dict:
         """Launch test."""
-        self.runner.call_hook('before_test')
-        self.runner.call_hook('before_test_epoch')
+        self.runner.call_hook("before_test")
+        self.runner.call_hook("before_test_epoch")
         self.runner.model.eval()
         for idx, data_batch in enumerate(self.dataloader):
             self.run_iter(idx, data_batch)
 
         # compute metrics
         metrics = self.evaluator.evaluate(len(self.dataloader.dataset))
-        self.runner.call_hook('after_test_epoch', metrics=metrics)
-        self.runner.call_hook('after_test')
+        self.runner.call_hook("after_test_epoch", metrics=metrics)
+        self.runner.call_hook("after_test")
         return metrics
 
     @torch.no_grad()
@@ -451,16 +464,99 @@ class TestLoop(BaseLoop):
         Args:
             data_batch (Sequence[dict]): Batch of data from dataloader.
         """
-        self.runner.call_hook(
-            'before_test_iter', batch_idx=idx, data_batch=data_batch)
+        self.runner.call_hook("before_test_iter", batch_idx=idx, data_batch=data_batch)
         # predictions should be sequence of BaseDataElement
         with autocast(enabled=self.fp16):
-            #outputs = self.runner.model.test_step(data_batch)
-            outputs = self.runner.model.test_step(
-            data_batch, epoch=0)
+            # Call predict() to save point clouds before evaluation
+            # We need to process the data the same way test_step does, then call predict()
+            try:
+                # Process data the same way test_step does
+                processed_data = self.runner.model.data_preprocessor(data_batch, False)
+
+                # data_preprocessor can return either a tuple or a dict
+                # Handle both cases
+                if isinstance(processed_data, dict):
+                    # If it's a dict, extract inputs and data_samples
+                    batch_inputs_dict = processed_data.get("inputs", processed_data)
+                    batch_data_samples = processed_data.get("data_samples", [])
+                elif (
+                    isinstance(processed_data, (tuple, list))
+                    and len(processed_data) >= 2
+                ):
+                    # If it's a tuple/list, unpack it
+                    batch_inputs_dict = processed_data[0]
+                    batch_data_samples = processed_data[1]
+                else:
+                    raise ValueError(
+                        f"Unexpected processed_data format: {type(processed_data)}"
+                    )
+
+                # Ensure batch_data_samples is a list
+                if not isinstance(batch_data_samples, (list, tuple)):
+                    batch_data_samples = (
+                        [batch_data_samples] if batch_data_samples is not None else []
+                    )
+
+                # Call model with mode='predict' which will route to predict() method
+                # This is the standard way - Base3DDetector.forward routes mode='predict' to self.predict()
+                if len(batch_data_samples) > 0:
+                    # Check if data_samples have required attributes for predict()
+                    first_sample = batch_data_samples[0]
+                    has_lidar_path = hasattr(first_sample, "lidar_path")
+                    has_eval_ann = hasattr(first_sample, "eval_ann_info")
+
+                    if has_lidar_path:
+                        print_log(
+                            f"INFO: Calling model with mode=predict for {len(batch_data_samples)} samples (lidar_path: {first_sample.lidar_path})",
+                            logger="current",
+                            level=logging.INFO,
+                        )
+                    else:
+                        print_log(
+                            f"INFO: Calling model with mode=predict for {len(batch_data_samples)} samples (no lidar_path, will use model forward)",
+                            logger="current",
+                            level=logging.INFO,
+                        )
+
+                    # This will call self.predict() internally via Base3DDetector.forward
+                    try:
+                        result = self.runner.model(
+                            batch_inputs_dict,
+                            batch_data_samples,
+                            mode="predict",
+                            epoch=0,
+                        )
+                        print_log(
+                            f"INFO: predict() call completed successfully, result type: {type(result)}",
+                            logger="current",
+                            level=logging.INFO,
+                        )
+                    except Exception as predict_error:
+                        import traceback
+
+                        error_msg = f"ERROR in predict() execution: {str(predict_error)}\n{traceback.format_exc()[:1500]}"
+                        print_log(error_msg, logger="current", level=logging.ERROR)
+                        # Don't re-raise - let evaluation continue even if predict fails
+                        # The error might be from a non-critical part of the code
+                else:
+                    print_log(
+                        f"WARNING: batch_data_samples is empty, cannot call predict()",
+                        logger="current",
+                        level=logging.WARNING,
+                    )
+            except Exception as e:
+                # If predict fails, log but continue with evaluation
+                import traceback
+
+                print_log(
+                    f"ERROR: predict() call failed: {str(e)}\n{traceback.format_exc()[:1000]}",
+                    logger="current",
+                    level=logging.ERROR,
+                )
+
+            # Now call test_step for evaluation (this also processes data, but that's okay)
+            outputs = self.runner.model.test_step(data_batch, epoch=0)
         self.evaluator.process(data_samples=outputs, data_batch=data_batch)
         self.runner.call_hook(
-            'after_test_iter',
-            batch_idx=idx,
-            data_batch=data_batch,
-            outputs=outputs)
+            "after_test_iter", batch_idx=idx, data_batch=data_batch, outputs=outputs
+        )
