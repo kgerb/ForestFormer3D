@@ -2,3 +2,4 @@ data/
 work_dirs/
 */__pycache__/
 *.pyc
+data/ForAINetV2/meta_data
