@@ -91,12 +91,13 @@ train_pipeline = [
         use_color=False,
         load_dim=3,
         use_dim=[0, 1, 2]),
-    dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=False,
-        with_label_3d=False,
-        with_mask_3d=True,
-        with_seg_3d=True),
+            dict(
+                type='LoadAnnotations3D_',
+                with_sp_mask_3d=False,
+                with_bbox_3d=False,
+                with_label_3d=False,
+                with_mask_3d=True,
+                with_seg_3d=True),
     dict(type='CylinderCrop', radius=radius),
     dict(type='GridSample', grid_size=0.2),
     dict(
@@ -130,12 +131,13 @@ val_pipeline = [
         use_color=False,
         load_dim=3,
         use_dim=[0, 1, 2]),
-    dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=False,
-        with_label_3d=False,
-        with_mask_3d=True,
-        with_seg_3d=True),
+            dict(
+                type='LoadAnnotations3D_',
+                with_sp_mask_3d=False,
+                with_bbox_3d=False,
+                with_label_3d=False,
+                with_mask_3d=True,
+                with_seg_3d=True),
     dict(type='CylinderCrop', radius=radius),
     dict(type='GridSample', grid_size=0.2),
     dict(
@@ -153,12 +155,13 @@ test_pipeline = [
         use_color=False,
         load_dim=3,
         use_dim=[0, 1, 2]),
-    dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=False,
-        with_label_3d=False,
-        with_mask_3d=True,
-        with_seg_3d=True),
+            dict(
+                type='LoadAnnotations3D_',
+                with_sp_mask_3d=False,
+                with_bbox_3d=False,
+                with_label_3d=False,
+                with_mask_3d=True,
+                with_seg_3d=True),
     dict(type='Pack3DDetInputs_', keys=['points', 'gt_labels_3d', 'pts_semantic_mask', 'pts_instance_mask','instance_mask'])
 ]
 
